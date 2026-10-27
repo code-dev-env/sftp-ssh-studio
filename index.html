@@ -1,0 +1,58 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Custom SFTP</title>
+<link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; height:100vh; font:13px Segoe UI, sans-serif; background:#cfcfcf; color:#111; display:flex; padding:0 8px 8px; }
+  #login { margin:auto; display:flex; flex-direction:column; gap:8px; width:280px; }
+  input { padding:6px; background:#e6e6e6; color:#111; border:1px solid #999; }
+  button { padding:6px 10px; background:#0e639c; color:#fff; border:0; cursor:pointer; }
+  #err { color:#c00; }
+  #main { display:none; width:100%; height:100%; }
+  #left { width:300px; min-width:120px; display:flex; flex-direction:column; position:relative; }
+  #resizer { width:6px; cursor:col-resize; background:#b4b4b4; margin:0 4px; flex:none; }
+  #resizer:hover, #resizer.drag { background:#0e639c; }
+  #left.loading #files { opacity:.4; pointer-events:none; }
+  #bar { height:2px; background:transparent; overflow:hidden; }
+  #left.loading #bar { background:linear-gradient(90deg,transparent,#0e639c,transparent); background-size:50% 100%; background-repeat:no-repeat; animation:slide .8s linear infinite; }
+  @keyframes slide { from { background-position:-50% 0; } to { background-position:150% 0; } }
+  .hid { opacity:.45; }
+  #path { margin:4px; }
+  #files { flex:1; overflow:auto; }
+  .f { padding:3px 8px; cursor:pointer; white-space:nowrap; }
+  .f:hover { background:#bfd0e2; }
+  .d { color:#111; }
+  #right { flex:1; display:flex; flex-direction:column; min-width:0; }
+  #tabs { display:flex; background:#bdbdbd; }
+  .tab { padding:6px 12px; cursor:pointer; border-right:1px solid #a5a5a5; color:#222; }
+  .tab.on { background:#1e1e1e; color:#fff; }
+  .tab span { margin-left:8px; color:#999; }
+  #add { padding:6px 12px; cursor:pointer; color:#333; }
+  #terms { flex:1; position:relative; }
+  .term { position:absolute; inset:0; padding:4px; background:#1e1e1e; display:none; }
+  .term.on { display:block; }
+  #editor { display:none; position:fixed; inset:30px; background:#dedede; border:1px solid #888; flex-direction:column; z-index:10; box-shadow:0 4px 20px rgba(0,0,0,.35); }
+  #editor .bar { display:flex; gap:8px; align-items:center; padding:6px; background:#c4c4c4; color:#111; }
+  #ename { flex:1; }
+  #etext { flex:1; background:#dedede; color:#111; border:0; padding:8px; font:13px Consolas, monospace; resize:none; outline:none; white-space:pre; }
+</style></head>
+<body>
+<div id="login">
+  <h3>Connect</h3>
+  <input id="host" value="192.168.40.161" placeholder="Host">
+  <input id="user" value="deploy" placeholder="User">
+  <input id="pass" type="password" placeholder="Password">
+  <button id="go">Connect</button>
+  <div id="err"></div>
+</div>
+<div id="main">
+  <div id="left"><input id="path"><div id="bar"></div><div id="files"></div></div><div id="resizer"></div>
+  <div id="right"><div id="tabs"><div id="add">+</div></div><div id="terms"></div></div>
+</div>
+<div id="editor">
+  <div class="bar"><span id="ename"></span><span id="estat"></span><button id="save">Save (Ctrl+S)</button><button id="close">Close</button></div>
+  <textarea id="etext" spellcheck="false" wrap="off"></textarea>
+</div>
+<script src="renderer.js"></script>
+</body></html>
