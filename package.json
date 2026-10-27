@@ -1,15 +1,15 @@
 {
-  "name": "custom-sftp",
+  "name": "sftp-studio",
   "version": "1.0.0",
-  "description": "Custom SFTP terminal + file browser",
+  "description": "SFTP Studio - SFTP file browser, text editor and SSH terminal",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win portable"
   },
   "build": {
-    "appId": "local.custom.sftp",
-    "productName": "Custom SFTP",
+    "appId": "com.sftpstudio.app",
+    "productName": "SFTP Studio",
     "win": {
       "target": "portable",
       "icon": "build/icon.ico",
@@ -23,7 +23,7 @@
       "package.json"
     ],
     "portable": {
-      "artifactName": "CustomSFTP.exe"
+      "artifactName": "SFTPStudio.exe"
     }
   },
   "dependencies": {
