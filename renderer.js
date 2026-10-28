@@ -103,7 +103,11 @@ function closeTab(id) {
 $('add').onclick = newTab;
 ipcRenderer.on('shell-data', (e, id, d) => tabs[id] && tabs[id].term.write(d));
 ipcRenderer.on('shell-exit', (e, id) => closeTab(id));
-window.addEventListener('resize', () => active && tabs[active] && tabs[active].fit.fit());
+const refit = () => active && tabs[active] && tabs[active].fit.fit();
+window.addEventListener('resize', refit);
+// moving between monitors (different size/DPI) can leave the layout stale; refit whenever the terminal area changes
+new ResizeObserver(() => requestAnimationFrame(refit)).observe($('terms'));
+matchMedia('(resolution: 1dppx)').addEventListener?.('change', refit);
 
 // ---------- resizable left pane ----------
 $('resizer').onmousedown = (e) => {
