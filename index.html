@@ -115,6 +115,14 @@
       .d {
         color: #111;
       }
+      #upbtns {
+        display: flex;
+        gap: 4px;
+        margin: 0 4px 4px;
+      }
+      #upbtns button {
+        flex: 1;
+      }
       #right {
         flex: 1;
         display: flex;
@@ -314,8 +322,8 @@
   <body>
     <div id="login">
       <h3>Connect</h3>
-      <input id="host" value="192.168.40.161" placeholder="Host" />
-      <input id="user" value="deploy" placeholder="User" />
+      <input id="host" placeholder="Host" />
+      <input id="user" placeholder="User" />
       <input id="pass" type="password" placeholder="Password" />
       <button id="go">Connect</button>
       <div id="err"></div>
@@ -323,6 +331,10 @@
     <div id="main">
       <div id="left">
         <input id="path" />
+        <div id="upbtns">
+          <button id="upfiles">Upload files</button
+          ><button id="updir">Upload folder</button>
+        </div>
         <div id="bar"></div>
         <div id="files"></div>
       </div>
@@ -343,7 +355,19 @@
     </div>
     <div id="menu">
       <div id="mdl"></div>
+      <div id="mrename">Rename…</div>
+      <div id="mdel">Delete</div>
       <div id="mprops">Properties</div>
+    </div>
+    <div id="ren" class="overlay">
+      <div class="box">
+        <div>New name</div>
+        <input id="rinput" spellcheck="false" />
+        <div class="btns">
+          <button id="rcancel" class="sec">Cancel</button
+          ><button id="rok">Rename</button>
+        </div>
+      </div>
     </div>
     <div id="bin" class="overlay">
       <div class="box">

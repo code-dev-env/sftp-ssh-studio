@@ -9,6 +9,12 @@ let cwd = "/",
   active = null;
 
 // ---------- login ----------
+// host and user are remembered between launches; the password never is
+try {
+  $("host").value = localStorage.getItem("host") || "";
+  $("user").value = localStorage.getItem("user") || "";
+} catch {}
+if ($("host").value && $("user").value) $("pass").focus();
 async function connect() {
   $("err").textContent = "Connecting...";
   const r = await ipcRenderer.invoke("connect", {
@@ -20,6 +26,10 @@ async function connect() {
     $("err").textContent = r.error;
     return;
   }
+  try {
+    localStorage.setItem("host", $("host").value);
+    localStorage.setItem("user", $("user").value);
+  } catch {}
   $("login").style.display = "none";
   $("main").style.display = "flex";
   await listDir(r.home);
@@ -61,8 +71,7 @@ async function listDir(p) {
       };
     box.appendChild(d);
   };
-  if (p !== "/")
-    add("..", "d", () => listDir(p.replace(/\/[^/]*$/, "") || "/"));
+  if (p !== "/") add("..", "d", () => listDir(dirname(p)));
   for (const f of r.items) {
     const item = { path: join(p, f.name), dir: f.dir };
     if (f.dir)
@@ -84,12 +93,96 @@ async function listDir(p) {
   }
 }
 
+// ---------- upload ----------
+const dirname = (p) => p.replace(/\/[^/]*$/, "") || "/";
+const basename = (p) => p.split("/").pop();
+async function upload(dir) {
+  const paths = await ipcRenderer.invoke("pick", dir);
+  if (!paths.length) return;
+  const r = await transfer("upload", { paths, dest: cwd });
+  if (r.error) alert(r.error);
+  listDir(cwd);
+}
+$("upfiles").onclick = () => upload(false);
+$("updir").onclick = () => upload(true);
+
+// ---------- rename ----------
+let renItem = null;
+function askRename(item) {
+  renItem = item;
+  $("rinput").value = basename(item.path);
+  $("ren").style.display = "flex";
+  $("rinput").focus();
+  // select the name without the extension
+  const n = $("rinput").value,
+    dot = n.lastIndexOf(".");
+  $("rinput").setSelectionRange(0, !item.dir && dot > 0 ? dot : n.length);
+}
+async function doRename() {
+  const item = renItem,
+    name = $("rinput").value.trim();
+  if (!item) return;
+  if (!name || name === basename(item.path)) return closeRename();
+  if (name.includes("/")) {
+    alert('Name cannot contain "/"');
+    return;
+  }
+  closeRename();
+  const r = await ipcRenderer.invoke("rename", {
+    from: item.path,
+    to: join(dirname(item.path), name),
+  });
+  if (r.error) alert(r.error);
+  listDir(cwd);
+}
+const closeRename = () => {
+  renItem = null;
+  $("ren").style.display = "none";
+};
+$("rok").onclick = doRename;
+$("rcancel").onclick = closeRename;
+$("rinput").onkeydown = (e) => {
+  if (e.key === "Enter") doRename();
+  if (e.key === "Escape") closeRename();
+};
+$("ren").onmousedown = (e) => {
+  if (e.target === $("ren")) closeRename();
+};
+
+// ---------- delete ----------
+async function doDelete(item) {
+  if (
+    !confirm(
+      "Delete " +
+        (item.dir ? "folder" : "file") +
+        ' "' +
+        basename(item.path) +
+        '"' +
+        (item.dir ? " and everything in it" : "") +
+        "?\n\nThis cannot be undone.",
+    )
+  )
+    return;
+  $("left").classList.add("loading");
+  const r = await ipcRenderer.invoke("delete", item.path);
+  if (r.error) alert(r.error);
+  listDir(cwd);
+}
+
 // ---------- context menu ----------
 function showMenu(x, y, item) {
   const m = $("menu");
   m.style.display = "block";
   m.style.left = Math.min(x, window.innerWidth - m.offsetWidth - 4) + "px";
   m.style.top = Math.min(y, window.innerHeight - m.offsetHeight - 4) + "px";
+  $("mrename").onclick = () => {
+    hideMenu();
+    askRename(item);
+  };
+  $("mdel").onclick = () => {
+    hideMenu();
+    doDelete(item);
+  };
   $("mdl").textContent = item.dir ? "Download folder…" : "Download file…";
   $("mdl").onclick = () => {
     hideMenu();

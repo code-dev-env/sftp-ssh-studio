@@ -1,16 +1,18 @@
 # SFTP Studio
 
-A lightweight desktop client that combines an SFTP file browser, a built-in text editor and multi-tab SSH terminals in a single window. Built with Electron, [ssh2](https://github.com/mscdex/ssh2) and [xterm.js](https://xtermjs.org/).
+A lightweight desktop client that combines an SFTP file browser with file transfer, a built-in text editor and multi-tab SSH terminals in a single window. Built with Electron, [ssh2](https://github.com/mscdex/ssh2) and [xterm.js](https://xtermjs.org/).
 
 ## Features
 
 - **SFTP file browser** – navigate remote directories, with folders listed first and hidden files dimmed. Type a path into the address bar to jump straight to it.
-- **Built-in editor** – click a remote file to open it, edit it and save it back to the server with `Ctrl+S`. `Esc` closes the editor.
+- **File transfer** – upload files or whole folders with the **Upload files** and **Upload folder** buttons, and download a file or folder from the right-click menu. Both show live progress and can be cancelled, and uploads ask before overwriting existing items.
+- **Rename, delete and properties** – right-click an item to rename or delete it (deleting asks for confirmation), or to view its permissions, owner, group, size, timestamps and symlink target. Folders also show their total size and item count.
+- **Built-in editor** – click a remote file to open it, edit it and save it back to the server with `Ctrl+S`. `Esc` closes the editor. Files that look binary ask before opening.
 - **Multi-tab SSH terminal** – open as many interactive shell sessions as you need over a single connection. Terminals use full xterm-256color emulation and resize with the window.
 - **Clipboard support** – `Ctrl+C` copies a selection (or `Ctrl+Shift+C`), `Ctrl+V` or right-click pastes.
 - **Resizable layout** – drag the divider between the file browser and the terminal to suit your workflow.
 - **Keep-alive** – the connection sends keep-alive packets every 15 seconds, and the app returns to the login screen if the connection drops.
-- **Portable Windows build** – package the app as a single `.exe` that needs no installer.
+- **Windows builds** – package the app as a portable `.exe` that needs no installer, or as an installer.
 
 ## Requirements
 
@@ -30,13 +32,13 @@ Enter the host, username and password on the login screen and click **Connect**.
 
 ## Building
 
-Create a portable Windows executable:
+Create the Windows portable executable and installer:
 
 ```bash
 npm run build
 ```
 
-The output is written to the `dist/` folder as `SFTPStudio.exe`.
+The output is written to the `dist/` folder as `SFTPStudio-Portable.exe` (portable) and `SFTPStudio-Setup.exe` (installer, lets you choose the install folder). The builds are not code signed, so Windows SmartScreen may show a warning.
 
 ## Usage
 
@@ -46,6 +48,8 @@ The output is written to the `dist/` folder as `SFTPStudio.exe`.
 | Go up a level | Click `..` |
 | Jump to a path | Type it in the address bar and press `Enter` |
 | Edit a file | Click it, then `Ctrl+S` to save |
+| Upload | Click **Upload files** or **Upload folder** above the file list |
+| Download, rename, delete, properties | Right-click an item |
 | New terminal | Click `+` in the tab bar |
 | Close a terminal | Click `✕` on its tab (closing the last tab disconnects) |
 | Copy / paste in terminal | `Ctrl+C` with a selection / `Ctrl+V` or right-click |
@@ -71,7 +75,6 @@ The output is written to the `dist/` folder as `SFTPStudio.exe`.
 
 - SSH key authentication
 - Host key verification
-- File upload, download, rename and delete
 - Configurable port and saved connection profiles
 
 ## License

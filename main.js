@@ -300,6 +300,116 @@ ipcMain.handle("download", async (e, { p, dir, id }) => {
     delete xfers[id];
   }
 });
+// ---------- rename / move / delete ----------
+const sf = (fn, ...a) =>
+  new Promise((res, rej) =>
+    sftp[fn](...a, (err, r) => (err ? rej(err) : res(r))),
+  );
+const exists = (p) =>
+  stat(p).then(
+    () => true,
+    () => false,
+  );
+// rename doubles as move (drag a row onto a folder)
+ipcMain.handle("rename", async (e, { from, to }) => {
+  try {
+    if (await exists(to)) return { error: '"' + path.posix.basename(to) + '" already exists' };
+    await sf("rename", from, to);
+    return {};
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+async function rmrf(p) {
+  if (!(await sf("lstat", p)).isDirectory()) return sf("unlink", p);
+  for (const f of await readdir(p))
+    if (f.filename !== "." && f.filename !== "..")
+      await rmrf(path.posix.join(p, f.filename));
+  await sf("rmdir", p);
+}
+ipcMain.handle("delete", async (e, p) => {
+  try {
+    await rmrf(p);
+    return {};
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
+// ---------- upload ----------
+ipcMain.handle("pick", async (e, dir) => {
+  const r = await dialog.showOpenDialog(win, {
+    title: dir ? "Choose folder(s) to upload" : "Choose file(s) to upload",
+    properties: [dir ? "openDirectory" : "openFile", "multiSelections"],
+  });
+  return r.canceled ? [] : r.filePaths;
+});
+ipcMain.handle("upload", async (e, { paths, dest, id }) => {
+  const clash = [];
+  for (const p of paths)
+    if (await exists(path.posix.join(dest, path.basename(p))))
+      clash.push(path.basename(p));
+  if (clash.length) {
+    const r = await dialog.showMessageBox(win, {
+      type: "question",
+      buttons: ["Overwrite", "Cancel"],
+      defaultId: 1,
+      cancelId: 1,
+      message: "Overwrite existing items in " + dest + "?",
+      detail: clash.join("\n"),
+    });
+    if (r.response !== 0) return { cancelled: true };
+  }
+  xfers[id] = {};
+  let current = null;
+  try {
+    const files = [],
+      dirs = [];
+    const walk = async (local, remote) => {
+      const st = await fs.promises.stat(local);
+      if (st.isDirectory()) {
+        dirs.push(remote);
+        for (const n of await fs.promises.readdir(local))
+          await walk(path.join(local, n), path.posix.join(remote, n));
+      } else files.push({ local, remote, size: st.size });
+    };
+    xfers[id].abort = () => {
+      xfers[id].cancelled = true;
+    };
+    progress(id, 0, 0, "Scanning…");
+    for (const p of paths) await walk(p, path.posix.join(dest, path.basename(p)));
+    for (const d of dirs)
+      await sf("mkdir", d).catch(async (err) => {
+        if (!(await stat(d).then((s) => s.isDirectory(), () => false))) throw err;
+      });
+    const total = files.reduce((s, f) => s + f.size, 0);
+    let done = 0;
+    for (const f of files) {
+      if (xfers[id].cancelled) throw new Error("cancelled");
+      current = f.remote;
+      progress(id, done, total, f.local);
+      await pump(
+        id,
+        fs.createReadStream(f.local),
+        sftp.createWriteStream(f.remote),
+        (n) => {
+          done += n;
+          progress(id, done, total);
+        },
+      );
+      current = null;
+    }
+    return {};
+  } catch (err) {
+    if (current) sftp.unlink(current, () => {});
+    return err.message === "cancelled"
+      ? { cancelled: true }
+      : { error: err.message };
+  } finally {
+    delete xfers[id];
+  }
+});
+
 ipcMain.handle(
   "write",
   (e, p, text) =>

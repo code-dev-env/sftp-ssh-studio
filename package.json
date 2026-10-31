@@ -5,13 +5,13 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win portable"
+    "build": "electron-builder --win"
   },
   "build": {
     "appId": "com.sftpstudio.app",
     "productName": "SFTP Studio",
     "win": {
-      "target": "portable",
+      "target": ["portable", "nsis"],
       "icon": "build/icon.ico",
       "signExecutable": false
     },
@@ -23,7 +23,12 @@
       "package.json"
     ],
     "portable": {
-      "artifactName": "SFTPStudio.exe"
+      "artifactName": "SFTPStudio-Portable.exe"
+    },
+    "nsis": {
+      "artifactName": "SFTPStudio-Setup.exe",
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   },
   "dependencies": {
